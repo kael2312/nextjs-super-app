@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import {useLogoutMutation} from "@/queries/useAuth";
 import {useRouter} from 'next/navigation'
+import {useAccount} from "@/queries/useAccount";
 
 const account = {
   name: 'Nguyễn Văn A',
@@ -21,8 +22,10 @@ const account = {
 export default function DropdownAvatar() {
   const logoutMutation = useLogoutMutation()
   const router = useRouter()
+  const userProfileQuery = useAccount()
+  const account = userProfileQuery.data?.payload.data
 
-  const lougout = async () => {
+  const logout = async () => {
     if(logoutMutation.isPending) return;
     try {
       await logoutMutation.mutateAsync()
@@ -37,13 +40,13 @@ export default function DropdownAvatar() {
       <DropdownMenuTrigger asChild>
         <Button variant='outline' size='icon' className='overflow-hidden rounded-full'>
           <Avatar>
-            <AvatarImage src={account.avatar ?? undefined} alt={account.name} />
-            <AvatarFallback>{account.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+            <AvatarImage src={account?.avatar ?? undefined} alt={account?.name} />
+            <AvatarFallback>{account?.name.slice(0, 2).toUpperCase()}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align='end'>
-        <DropdownMenuLabel>{account.name}</DropdownMenuLabel>
+        <DropdownMenuLabel>{account?.name}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href={'/manage/setting'} className='cursor-pointer'>
@@ -52,7 +55,7 @@ export default function DropdownAvatar() {
         </DropdownMenuItem>
         <DropdownMenuItem>Hỗ trợ</DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={lougout}>Đăng xuất</DropdownMenuItem>
+        <DropdownMenuItem onClick={logout}>Đăng xuất</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
