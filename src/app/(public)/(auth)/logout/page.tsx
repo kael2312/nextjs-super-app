@@ -2,33 +2,39 @@
 
 import React, {useEffect, useRef} from 'react';
 import {useLogoutMutation} from "@/queries/useAuth";
-import {UseMutateAsyncFunction} from "@tanstack/react-query";
 import {useRouter, useSearchParams} from "next/navigation";
-import {getRefreshTokenFromLocalStorage} from "@/lib/utils";
+import {getAccessTokenFromLocalStorage, getRefreshTokenFromLocalStorage} from "@/lib/utils";
+import {useAppContext} from "@/components/app-provider";
 
 const LogoutPage = () => {
-    const {mutateAsync} = useLogoutMutation();
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const refreshTokenFromUrl = searchParams.get("refreshToken");
-    const trackingRef = useRef<UseMutateAsyncFunction | null>(null)
-
+    const { mutateAsync } = useLogoutMutation()
+    const router = useRouter()
+    const { setIsAuth } = useAppContext()
+    const searchParams = useSearchParams()
+    const refreshTokenFromUrl = searchParams.get('refreshToken')
+    const accessTokenFromUrl = searchParams.get('accessToken')
+    const ref = useRef<any>(null)
     useEffect(() => {
-        if(trackingRef.current || refreshTokenFromUrl !== getRefreshTokenFromLocalStorage()) return;
-        trackingRef.current = mutateAsync
-        mutateAsync().then(() => {
-            setTimeout(() => {
-                trackingRef.current = null
-            }, 1000)
-            router.push("/login")
-        })
-    }, [mutateAsync, router, refreshTokenFromUrl])
-
-    return (
-        <div>
-            
-        </div>
-    );
+        if (
+            !ref.current &&
+            ((refreshTokenFromUrl &&
+                    refreshTokenFromUrl === getRefreshTokenFromLocalStorage()) ||
+                (accessTokenFromUrl &&
+                    accessTokenFromUrl === getAccessTokenFromLocalStorage()))
+        ) {
+            ref.current = mutateAsync
+            mutateAsync().then((res) => {
+                setTimeout(() => {
+                    ref.current = null
+                }, 1000)
+                setIsAuth(false)
+                router.push('/login')
+            })
+        } else {
+            router.push('/')
+        }
+    }, [mutateAsync, router, refreshTokenFromUrl, accessTokenFromUrl])
+    return <div>Log out....</div>
 };
 
 export default LogoutPage;
