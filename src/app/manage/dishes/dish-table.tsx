@@ -1,6 +1,6 @@
 'use client'
 
-import { CaretSortIcon, DotsHorizontalIcon } from '@radix-ui/react-icons'
+import { DotsHorizontalIcon } from '@radix-ui/react-icons'
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -13,9 +13,8 @@ import {
   getSortedRowModel,
   useReactTable
 } from '@tanstack/react-table'
-
 import { Button } from '@/components/ui/button'
-
+import DOMPurify from 'dompurify'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,11 +24,15 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { AccountListResType, AccountType } from '@/schemaValidations/account.schema'
-import AddEmployee from '@/app/manage/accounts/add-employee'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import EditEmployee from '@/app/manage/accounts/edit-employee'
 import { createContext, useContext, useEffect, useState } from 'react'
 import {
   AlertDialog,
@@ -41,38 +44,48 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from '@/components/ui/alert-dialog'
+import {
+  formatCurrency,
+  getVietnameseDishStatus,
+  handleErrorApi
+} from '@/lib/utils'
 import { useSearchParams } from 'next/navigation'
 import AutoPagination from '@/components/auto-pagination'
-import {useGetAccountList} from "@/queries/useAccount";
-// import {useAccountList} from "@/app/manage/accounts/hooks/useAccountList";
+import { DishListResType } from '@/schemaValidations/dish.schema'
+import EditDish from '@/app/manage/dishes/edit-dish'
+import AddDish from '@/app/manage/dishes/add-dish'
+import { useDeleteDishMutation, useDishListQuery } from '@/queries/useDish'
+import {toast} from "sonner";
 
-type AccountItem = AccountListResType['data'][0]
+type DishItem = DishListResType['data'][0]
 
-const AccountTableContext = createContext<{
-  setEmployeeIdEdit: (value: number) => void
-  employeeIdEdit: number | undefined
-  employeeDelete: AccountItem | null
-  setEmployeeDelete: (value: AccountItem | null) => void
+const DishTableContext = createContext<{
+  setDishIdEdit: (value: number) => void
+  dishIdEdit: number | undefined
+  dishDelete: DishItem | null
+  setDishDelete: (value: DishItem | null) => void
 }>({
-  setEmployeeIdEdit: (value: number | undefined) => {},
-  employeeIdEdit: undefined,
-  employeeDelete: null,
-  setEmployeeDelete: (value: AccountItem | null) => {}
+  setDishIdEdit: (value: number | undefined) => {},
+  dishIdEdit: undefined,
+  dishDelete: null,
+  setDishDelete: (value: DishItem | null) => {}
 })
 
-export const columns: ColumnDef<AccountType>[] = [
+export const columns: ColumnDef<DishItem>[] = [
   {
     accessorKey: 'id',
     header: 'ID'
   },
   {
-    accessorKey: 'avatar',
-    header: 'Avatar',
+    accessorKey: 'image',
+    header: 'Ảnh',
     cell: ({ row }) => (
       <div>
         <Avatar className='aspect-square w-[100px] h-[100px] rounded-md object-cover'>
-          <AvatarImage src={row.getValue('avatar')} />
-          <AvatarFallback className='rounded-none'>{row.original.name}</AvatarFallback>
+          <AvatarImage src={row.getValue('image')} />
+          <AvatarFallback className='rounded-none'>
+            {row.original.name}
+          </AvatarFallback>
         </Avatar>
       </div>
     )
@@ -83,31 +96,45 @@ export const columns: ColumnDef<AccountType>[] = [
     cell: ({ row }) => <div className='capitalize'>{row.getValue('name')}</div>
   },
   {
-    accessorKey: 'email',
-    header: ({ column }) => {
-      return (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Email
-          <CaretSortIcon className='ml-2 h-4 w-4' />
-        </Button>
-      )
-    },
-    cell: ({ row }) => <div className='lowercase'>{row.getValue('email')}</div>
+    accessorKey: 'price',
+    header: 'Giá cả',
+    cell: ({ row }) => (
+      <div className='capitalize'>{formatCurrency(row.getValue('price'))}</div>
+    )
+  },
+  {
+    accessorKey: 'description',
+    header: 'Mô tả',
+    cell: ({ row }) => (
+      <div
+        dangerouslySetInnerHTML={{
+          __html: DOMPurify.sanitize(row.getValue('description'))
+        }}
+        className='whitespace-pre-line'
+      />
+    )
+  },
+  {
+    accessorKey: 'status',
+    header: 'Trạng thái',
+    cell: ({ row }) => (
+      <div>{getVietnameseDishStatus(row.getValue('status'))}</div>
+    )
   },
   {
     id: 'actions',
     enableHiding: false,
     cell: function Actions({ row }) {
-      const { setEmployeeIdEdit, setEmployeeDelete } = useContext(AccountTableContext)
-      const openEditEmployee = () => {
-        setEmployeeIdEdit(row.original.id)
+      const { setDishIdEdit, setDishDelete } = useContext(DishTableContext)
+      const openEditDish = () => {
+        setDishIdEdit(row.original.id)
       }
 
-      const openDeleteEmployee = () => {
-        setEmployeeDelete(row.original)
+      const openDeleteDish = () => {
+        setDishDelete(row.original)
       }
       return (
-        <DropdownMenu modal={false}>
+        <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant='ghost' className='h-8 w-8 p-0'>
               <span className='sr-only'>Open menu</span>
@@ -117,8 +144,8 @@ export const columns: ColumnDef<AccountType>[] = [
           <DropdownMenuContent align='end'>
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={openEditEmployee}>Sửa</DropdownMenuItem>
-            <DropdownMenuItem onClick={openDeleteEmployee}>Xóa</DropdownMenuItem>
+            <DropdownMenuItem onClick={openEditDish}>Sửa</DropdownMenuItem>
+            <DropdownMenuItem onClick={openDeleteDish}>Xóa</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
@@ -126,33 +153,50 @@ export const columns: ColumnDef<AccountType>[] = [
   }
 ]
 
-function AlertDialogDeleteAccount({
-  employeeDelete,
-  setEmployeeDelete
+function AlertDialogDeleteDish({
+  dishDelete,
+  setDishDelete
 }: {
-  employeeDelete: AccountItem | null
-  setEmployeeDelete: (value: AccountItem | null) => void
+  dishDelete: DishItem | null
+  setDishDelete: (value: DishItem | null) => void
 }) {
+  const { mutateAsync } = useDeleteDishMutation()
+  const deleteDish = async () => {
+    if (dishDelete) {
+      try {
+        const result = await mutateAsync(dishDelete.id)
+        setDishDelete(null)
+        toast.success(result.payload.message)
+      } catch (error) {
+        handleErrorApi({
+          error
+        })
+      }
+    }
+  }
   return (
     <AlertDialog
-      open={Boolean(employeeDelete)}
+      open={Boolean(dishDelete)}
       onOpenChange={(value) => {
         if (!value) {
-          setEmployeeDelete(null)
+          setDishDelete(null)
         }
       }}
     >
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Xóa nhân viên?</AlertDialogTitle>
+          <AlertDialogTitle>Xóa món ăn?</AlertDialogTitle>
           <AlertDialogDescription>
-            Tài khoản <span className='bg-foreground text-primary-foreground rounded px-1'>{employeeDelete?.name}</span>{' '}
+            Món{' '}
+            <span className='bg-foreground text-primary-foreground rounded px-1'>
+              {dishDelete?.name}
+            </span>{' '}
             sẽ bị xóa vĩnh viễn
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction>Continue</AlertDialogAction>
+          <AlertDialogAction onClick={deleteDish}>Continue</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -160,15 +204,14 @@ function AlertDialogDeleteAccount({
 }
 // Số lượng item trên 1 trang
 const PAGE_SIZE = 10
-export default function AccountTable() {
+export default function DishTable() {
   const searchParam = useSearchParams()
   const page = searchParam.get('page') ? Number(searchParam.get('page')) : 1
   const pageIndex = page - 1
-  // const params = Object.fromEntries(searchParam.entries())
-  const [employeeIdEdit, setEmployeeIdEdit] = useState<number | undefined>()
-  const [employeeDelete, setEmployeeDelete] = useState<AccountItem | null>(null)
-  const accountListQuery = useGetAccountList();
-  const data = accountListQuery.data?.payload?.data ?? []
+  const [dishIdEdit, setDishIdEdit] = useState<number | undefined>()
+  const [dishDelete, setDishDelete] = useState<DishItem | null>(null)
+  const dishListQuery = useDishListQuery()
+  const data = dishListQuery.data?.payload.data ?? []
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
@@ -208,19 +251,26 @@ export default function AccountTable() {
   }, [table, pageIndex])
 
   return (
-    <AccountTableContext.Provider value={{ employeeIdEdit, setEmployeeIdEdit, employeeDelete, setEmployeeDelete }}>
+    <DishTableContext.Provider
+      value={{ dishIdEdit, setDishIdEdit, dishDelete, setDishDelete }}
+    >
       <div className='w-full'>
-        <EditEmployee id={employeeIdEdit} setId={setEmployeeIdEdit} onSubmitSuccess={() => {}} />
-        <AlertDialogDeleteAccount employeeDelete={employeeDelete} setEmployeeDelete={setEmployeeDelete} />
+        <EditDish id={dishIdEdit} setId={setDishIdEdit} />
+        <AlertDialogDeleteDish
+          dishDelete={dishDelete}
+          setDishDelete={setDishDelete}
+        />
         <div className='flex items-center py-4'>
           <Input
-            placeholder='Filter emails...'
-            value={(table.getColumn('email')?.getFilterValue() as string) ?? ''}
-            onChange={(event) => table.getColumn('email')?.setFilterValue(event.target.value)}
+            placeholder='Lọc tên'
+            value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
+            onChange={(event) =>
+              table.getColumn('name')?.setFilterValue(event.target.value)
+            }
             className='max-w-sm'
           />
           <div className='ml-auto flex items-center gap-2'>
-            <AddEmployee />
+            <AddDish />
           </div>
         </div>
         <div className='rounded-md border'>
@@ -231,7 +281,12 @@ export default function AccountTable() {
                   {headerGroup.headers.map((header) => {
                     return (
                       <TableHead key={header.id}>
-                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
                       </TableHead>
                     )
                   })}
@@ -241,15 +296,26 @@ export default function AccountTable() {
             <TableBody>
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && 'selected'}
+                  >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
                     ))}
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className='h-24 text-center'>
+                  <TableCell
+                    colSpan={columns.length}
+                    className='h-24 text-center'
+                  >
                     No results.
                   </TableCell>
                 </TableRow>
@@ -259,18 +325,19 @@ export default function AccountTable() {
         </div>
         <div className='flex items-center justify-end space-x-2 py-4'>
           <div className='text-xs text-muted-foreground py-4 flex-1 '>
-            Hiển thị <strong>{table.getPaginationRowModel().rows.length}</strong> trong <strong>{data.length}</strong>{' '}
-            kết quả
+            Hiển thị{' '}
+            <strong>{table.getPaginationRowModel().rows.length}</strong> trong{' '}
+            <strong>{data.length}</strong> kết quả
           </div>
           <div>
             <AutoPagination
               page={table.getState().pagination.pageIndex + 1}
               pageSize={table.getPageCount()}
-              pathname='/manage/accounts'
+              pathname='/manage/dishes'
             />
           </div>
         </div>
       </div>
-    </AccountTableContext.Provider>
+    </DishTableContext.Provider>
   )
 }
