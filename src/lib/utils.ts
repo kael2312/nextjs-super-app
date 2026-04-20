@@ -99,3 +99,7 @@ export const getVietnameseDishStatus = (
             return 'Ẩn'
     }
 }
+
+export const generateSlugUrl = ({ name, id }: { name: string; id: number }) => {
+    return `${slugify(name)}-i.${id}`
+}
