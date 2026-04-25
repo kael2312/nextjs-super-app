@@ -5,6 +5,8 @@ import {UseFormSetError} from "react-hook-form";
 import {EntityError} from "@/lib/http";
 import envConfig, {defaultLocale} from "@/config";
 import {DishStatus} from "@/constants/type";
+import jwt from "jsonwebtoken";
+import {TokenPayload} from "@/types/jwt.types";
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
@@ -110,4 +112,8 @@ export const generateSocketInstace = (accessToken: string) => {
             Authorization: `Bearer ${accessToken}`
         }
     })
+}
+
+export const decodeToken = (token: string) => {
+    return jwt.decode(token) as TokenPayload
 }

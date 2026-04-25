@@ -23,7 +23,7 @@ const account = {
 export default function DropdownAvatar() {
   const logoutMutation = useLogoutMutation()
   const router = useRouter()
-  const { setIsAuth } = useAppContext()
+  const { setRole } = useAppContext()
   const userProfileQuery = useAccount()
   const account = userProfileQuery.data?.payload.data
 
@@ -31,7 +31,7 @@ export default function DropdownAvatar() {
     if(logoutMutation.isPending) return;
     try {
       await logoutMutation.mutateAsync()
-      setIsAuth(false)
+      setRole(undefined)
       router.push('/')
     } catch {
 

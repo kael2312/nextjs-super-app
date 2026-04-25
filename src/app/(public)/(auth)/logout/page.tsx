@@ -9,7 +9,7 @@ import {useAppContext} from "@/components/app-provider";
 const LogoutPage = () => {
     const { mutateAsync } = useLogoutMutation()
     const router = useRouter()
-    const { setIsAuth } = useAppContext()
+    const { setRole } = useAppContext()
     const searchParams = useSearchParams()
     const refreshTokenFromUrl = searchParams.get('refreshToken')
     const accessTokenFromUrl = searchParams.get('accessToken')
@@ -27,7 +27,7 @@ const LogoutPage = () => {
                 setTimeout(() => {
                     ref.current = null
                 }, 1000)
-                setIsAuth(false)
+                setRole(undefined)
                 router.push('/login')
             })
         } else {
