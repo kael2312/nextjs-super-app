@@ -103,3 +103,11 @@ export const getVietnameseDishStatus = (
 export const generateSlugUrl = ({ name, id }: { name: string; id: number }) => {
     return `${slugify(name)}-i.${id}`
 }
+
+export const generateSocketInstace = (accessToken: string) => {
+    return io(envConfig.NEXT_PUBLIC_API_ENDPOINT, {
+        auth: {
+            Authorization: `Bearer ${accessToken}`
+        }
+    })
+}
