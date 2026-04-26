@@ -43,7 +43,7 @@ export default function LoginForm() {
             toast.success(result.payload.message)
             setRole(result.payload.data.account.role)
             router.push('/manage/dashboard')
-        } catch (error: any) {
+        } catch (error) {
             handleErrorApi({
                 error,
                 setError: form.setError
@@ -59,9 +59,8 @@ export default function LoginForm() {
             </CardHeader>
             <CardContent>
                 <Form {...form}>
-                    <form className='space-y-2 max-w-[600px] flex-shrink-0 w-full' noValidate onSubmit={form.handleSubmit(onSubmit, errors => {
-                        console.error(errors)
-                    })}>
+                    <form className='space-y-2 max-w-[600px] flex-shrink-0 w-full' noValidate onSubmit={form.handleSubmit(onSubmit
+                    )}>
                         <div className='grid gap-4'>
                             <FormField
                                 control={form.control}

@@ -19,7 +19,7 @@ const RefreshToken = () => {
 
     useEffect(() => {
         if(UNAUTHENTICATED_PATH.includes(pathName)) return;
-        let interval = null;
+        let interval: string | number | NodeJS.Timeout | undefined = undefined;
         const checkAndRefreshToken = async () => {
             const accessToken = getAccessTokenFromLocalStorage();
             const refreshToken = getRefreshTokenFromLocalStorage();

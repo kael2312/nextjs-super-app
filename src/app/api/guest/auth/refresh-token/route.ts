@@ -1,6 +1,8 @@
 import { cookies } from 'next/headers'
 import jwt from 'jsonwebtoken'
 import guestApiRequest from '@/apiRequests/guest'
+import {EntityErrorPayload} from "@/lib/http";
+import {ErrorWithMessage} from "@/types/common.type";
 
 export async function POST(request: Request) {
   const cookieStore = await cookies()
@@ -41,11 +43,11 @@ export async function POST(request: Request) {
       expires: decodedRefreshToken.exp * 1000
     })
     return Response.json(payload)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.log(error)
     return Response.json(
       {
-        message: error.message ?? 'Có lỗi xảy ra'
+        message: (error as ErrorWithMessage)?.message ?? 'Có lỗi xảy ra'
       },
       {
         status: 401

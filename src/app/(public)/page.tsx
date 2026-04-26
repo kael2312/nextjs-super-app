@@ -1,5 +1,5 @@
 import dishApiRequest from '@/apiRequests/dish'
-import { formatCurrency, generateSlugUrl } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import { DishListResType } from '@/schemaValidations/dish.schema'
 import Image from 'next/image'
 

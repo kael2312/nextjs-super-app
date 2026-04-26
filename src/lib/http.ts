@@ -7,18 +7,23 @@ import {
     setAccessTokenToLocalStorage,
     setRefreshTokenToLocalStorage
 } from "@/lib/utils";
+import {FieldValues} from "react-hook-form";
 
 type CustomOptions = Omit<RequestInit, 'method'> & {
-    baseUrl?: string | undefined
+    baseUrl?: string | undefined,
 }
+
+type HeadersWithAuth = {
+    Authorization: string;
+};
 
 const ENTITY_ERROR_STATUS = 422
 const AUTHENTICATION_ERROR_STATUS = 401
 
-type EntityErrorPayload = {
+export type EntityErrorPayload = {
     message: string
     errors: {
-        field: string
+        field: FieldValues
         message: string
     }[]
 }
@@ -27,7 +32,10 @@ export class HttpError extends Error {
     status: number
     payload: {
         message: string
-        [key: string]: any
+        errors: {
+            field: FieldValues
+            message: string
+        }[]
     }
 
     constructor({
@@ -36,7 +44,7 @@ export class HttpError extends Error {
                     message = 'Lỗi HTTP'
                 }: {
         status: number
-        payload: any
+        payload: EntityErrorPayload
         message?: string
     }) {
         super(message)
@@ -62,7 +70,7 @@ export class EntityError extends HttpError {
     }
 }
 
-let clientLogoutRequest: null | Promise<any> = null
+let clientLogoutRequest: null | Promise<Response> = null
 const isClient = typeof window !== 'undefined'
 
 const request = async <Response>(
@@ -70,11 +78,11 @@ const request = async <Response>(
     url: string,
     options?: CustomOptions | undefined
 ) => {
-    let body: FormData | string | undefined = undefined
+    let body: BodyInit | null | undefined = undefined
     if (options?.body instanceof FormData) {
         body = options.body
     } else if (options?.body) {
-        body = JSON.stringify(options.body)
+        body = options.body
     }
     const baseHeaders: {
         [key: string]: string
@@ -105,11 +113,11 @@ const request = async <Response>(
         headers: {
             ...baseHeaders,
             ...options?.headers
-        } as any,
+        } as never,
         body,
         method
     })
-    const payload: Response = await res.json()
+    const payload = await res.json()
     const data = {
         status: res.status,
         payload
@@ -121,7 +129,7 @@ const request = async <Response>(
             throw new EntityError(
                 data as {
                     status: 422
-                    payload: EntityErrorPayload
+                    payload: EntityErrorPayload,
                 }
             )
         } else if (res.status === AUTHENTICATION_ERROR_STATUS) {
@@ -132,7 +140,7 @@ const request = async <Response>(
                         body: null, // Logout mình sẽ cho phép luôn luôn thành công
                         headers: {
                             ...baseHeaders
-                        } as any
+                        } as never
                     })
                     try {
                         await clientLogoutRequest
@@ -147,7 +155,7 @@ const request = async <Response>(
             } else {
                 // Đây là trường hợp khi mà chúng ta vẫn còn access token (còn hạn)
                 // Và chúng ta gọi API ở Next.js Server (Route Handler , Server Component) đến Server Backend
-                const accessToken = (options?.headers as any)?.Authorization.split(
+                const accessToken = (options?.headers as HeadersWithAuth)?.Authorization.split(
                     'Bearer '
                 )[1]
                 redirect(`/login?accessToken=${accessToken}`)
@@ -186,19 +194,19 @@ const http = {
     ) {
         return request<Response>('GET', url, options)
     },
-    post<Response>(
+    post<TBody, Response>(
         url: string,
-        body: any,
+        body: TBody,
         options?: Omit<CustomOptions, 'body'> | undefined
     ) {
-        return request<Response>('POST', url, { ...options, body })
+        return request<Response>('POST', url, { ...options, body: JSON.stringify(body) })
     },
-    put<Response>(
+    put<TBody, Response>(
         url: string,
-        body: any,
+        body: TBody,
         options?: Omit<CustomOptions, 'body'> | undefined
     ) {
-        return request<Response>('PUT', url, { ...options, body })
+        return request<Response>('PUT', url, { ...options, body: JSON.stringify(body) })
     },
     delete<Response>(
         url: string,

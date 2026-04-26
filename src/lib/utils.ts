@@ -1,12 +1,18 @@
 import {clsx, type ClassValue} from "clsx"
 import {twMerge} from "tailwind-merge"
 import {toast} from "sonner";
-import {UseFormSetError} from "react-hook-form";
+import {FieldPath, FieldValues, UseFormSetError} from "react-hook-form";
 import {EntityError} from "@/lib/http";
 import envConfig, {defaultLocale} from "@/config";
 import {DishStatus} from "@/constants/type";
 import jwt from "jsonwebtoken";
 import {TokenPayload} from "@/types/jwt.types";
+
+type ErrorWithPayload = {
+    payload: {
+        message: string;
+    };
+};
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
@@ -19,25 +25,25 @@ export const normalizePath = (path: string) => {
     return path.startsWith('/') ? path.slice(1) : path
 }
 
-export const handleErrorApi = ({
+export const handleErrorApi = <T extends FieldValues>({
                                    error,
                                    setError,
                                    duration
                                }: {
-    error: any
-    setError?: UseFormSetError<any>
+    error: unknown
+    setError?: UseFormSetError<T>
     duration?: number
 }) => {
     if (error instanceof EntityError && setError) {
         error.payload.errors.forEach((item) => {
-            setError(item.field, {
+            setError((item.field as unknown as FieldPath<T>), {
                 type: 'server',
                 message: item.message
             })
         })
     } else {
         toast.error('Lỗi', {
-            description: error?.payload?.message ?? 'Lỗi không xác định',
+            description: (error as ErrorWithPayload)?.payload?.message ?? 'Lỗi không xác định',
             duration: duration ?? 5000
         })
     }
@@ -102,17 +108,17 @@ export const getVietnameseDishStatus = (
     }
 }
 
-export const generateSlugUrl = ({ name, id }: { name: string; id: number }) => {
-    return `${slugify(name)}-i.${id}`
-}
-
-export const generateSocketInstace = (accessToken: string) => {
-    return io(envConfig.NEXT_PUBLIC_API_ENDPOINT, {
-        auth: {
-            Authorization: `Bearer ${accessToken}`
-        }
-    })
-}
+// export const generateSlugUrl = ({ name, id }: { name: string; id: number }) => {
+//     return `${slugify(name)}-i.${id}`
+// }
+//
+// export const generateSocketInstace = (accessToken: string) => {
+//     return io(envConfig.NEXT_PUBLIC_API_ENDPOINT, {
+//         auth: {
+//             Authorization: `Bearer ${accessToken}`
+//         }
+//     })
+// }
 
 export const decodeToken = (token: string) => {
     return jwt.decode(token) as TokenPayload

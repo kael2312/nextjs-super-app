@@ -13,8 +13,8 @@ const authApiRequest = {
         status: number,
         payload: RefreshTokenResType
     }> | null,
-    sLogin: (body: LoginBodyType) => http.post<LoginResType>('/auth/login', body),
-    login: (body: LoginBodyType) => http.post<LoginResType>('/api/auth/login', body, {
+    sLogin: (body: LoginBodyType) => http.post<LoginBodyType, LoginResType>('/auth/login', body),
+    login: (body: LoginBodyType) => http.post<LoginBodyType, LoginResType>('/api/auth/login', body, {
         baseUrl: ''
     }),
     serverLogout: (body: LogoutBodyType, accessToken: string) => http.post('/auth/logout', body, {
@@ -25,7 +25,7 @@ const authApiRequest = {
     logout: () => http.post('/api/auth/logout', null, {
         baseUrl: ''
     }),
-    serverRefreshToken: (body: RefreshTokenBodyType) => http.post<RefreshTokenResType>('/auth/refresh-token', body),
+    serverRefreshToken: (body: RefreshTokenBodyType) => http.post<RefreshTokenBodyType, RefreshTokenResType>('/auth/refresh-token', body),
     async refreshToken(){
         if(this.refreshTokenRequest) return this.refreshTokenRequest;
         this.refreshTokenRequest = http.post('/api/auth/refresh-token', null, {baseUrl: ''})

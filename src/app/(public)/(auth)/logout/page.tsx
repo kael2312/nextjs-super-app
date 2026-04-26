@@ -13,7 +13,7 @@ const LogoutPage = () => {
     const searchParams = useSearchParams()
     const refreshTokenFromUrl = searchParams.get('refreshToken')
     const accessTokenFromUrl = searchParams.get('accessToken')
-    const ref = useRef<any>(null)
+    const ref = useRef<unknown>(null)
     useEffect(() => {
         if (
             !ref.current &&

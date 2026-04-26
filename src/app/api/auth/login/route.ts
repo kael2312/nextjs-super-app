@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import {HttpError} from "@/lib/http";
 
 export async function POST(request: Request) {
+    console.log('login request: ', request);
     const body = (await request.json()) as LoginBodyType
     const cookieStore = await cookies()
     try {

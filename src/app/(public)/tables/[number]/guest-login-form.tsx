@@ -11,9 +11,8 @@ import {
   GuestLoginBodyType
 } from '@/schemaValidations/guest.schema'
 import {useSearchParams, useParams, useRouter} from 'next/navigation'
-import { useEffect } from 'react'
 import { useGuestLoginMutation } from '@/queries/useGuest'
-import { generateSocketInstace, handleErrorApi } from '@/lib/utils'
+import { handleErrorApi } from '@/lib/utils'
 import {useAppContext} from "@/components/app-provider";
 
 export default function GuestLoginForm() {
