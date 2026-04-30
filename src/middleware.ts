@@ -29,8 +29,9 @@ export function middleware(request: NextRequest){
 
         // 2.2 Đã đăng nhập nhưng accessToken hết hạn
         if(privatePaths.some((path) => pathname.startsWith(<string>path)) && !accessToken && refreshToken){
-            const url = new URL('/logout', request.url)
+            const url = new URL('/refresh-token', request.url)
             url.searchParams.set('refreshToken', request.cookies.get('refreshToken')?.value ?? '')
+            url.searchParams.set('redirect', pathname)
             return NextResponse.redirect(url);
         }
 
