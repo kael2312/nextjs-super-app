@@ -1,40 +1,63 @@
 'use client'
 
-import {useEffect} from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useAppStore } from '@/components/app-provider'
+import { checkAndRefreshToken } from '@/lib/utils'
+import { useEffect } from 'react'
 import {usePathname, useRouter} from "next/navigation";
-import {
-    checkAndRefreshToken,
-} from "@/lib/utils";
 
-// No need check refresh token
-const UNAUTHENTICATED_PATH = ['/login', '/logout', '/refresh-token'];
-
-const RefreshToken = () => {
-    const pathName = usePathname()
-    const router = useRouter();
-
+// Những page sau sẽ không check refesh token
+const UNAUTHENTICATED_PATH = ['/login', '/logout', '/refresh-token']
+export default function RefreshToken() {
+    const pathname = usePathname()
+    const router = useRouter()
+    const socket = useAppStore((state: { socket: any; }) => state.socket)
+    const disconnectSocket = useAppStore((state) => state.disconnectSocket)
     useEffect(() => {
-        if(UNAUTHENTICATED_PATH.includes(pathName)) return;
-        let interval: string | number | NodeJS.Timeout | undefined = undefined;
+        if (UNAUTHENTICATED_PATH.includes(pathname)) return
+        let interval: any = null
+        // Phải gọi lần đầu tiên, vì interval sẽ chạy sau thời gian TIMEOUT
+        const onRefreshToken = (force?: boolean) => {
+            checkAndRefreshToken({
+                onError: () => {
+                    clearInterval(interval)
+                    disconnectSocket()
+                    router.push('/login')
+                },
+                force
+            })
+        }
 
-        checkAndRefreshToken({
-            onError: () => {
-                clearInterval(interval)
-                router.push('/login');
-            }
-        });
-        interval = setInterval(() => checkAndRefreshToken({
-            onError: () => {
-                clearInterval(interval)
-                router.push('/login');
-            }
-        }), 1000);
+        onRefreshToken()
+        // Timeout interval phải bé hơn thời gian hết hạn của access token
+        // Ví dụ thời gian hết hạn access token là 10s thì 1s mình sẽ cho check 1 lần
+        const TIMEOUT = 1000
+        interval = setInterval(onRefreshToken, TIMEOUT)
 
+        if (socket?.connected) {
+            onConnect()
+        }
+
+        function onConnect() {
+            console.log(socket?.id)
+        }
+
+        function onDisconnect() {
+            console.log('disconnect')
+        }
+
+        function onRefreshTokenSocket() {
+            onRefreshToken(true)
+        }
+        socket?.on('connect', onConnect)
+        socket?.on('disconnect', onDisconnect)
+        socket?.on('refresh-token', onRefreshTokenSocket)
         return () => {
             clearInterval(interval)
+            socket?.off('connect', onConnect)
+            socket?.off('disconnect', onDisconnect)
+            socket?.off('refresh-token', onRefreshTokenSocket)
         }
-    }, [pathName, router]);
-    return null;
-};
-
-export default RefreshToken;
+    }, [pathname, router, socket, disconnectSocket])
+    return null
+}

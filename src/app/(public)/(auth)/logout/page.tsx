@@ -4,12 +4,12 @@ import React, {useEffect, useRef} from 'react';
 import {useLogoutMutation} from "@/queries/useAuth";
 import {useRouter, useSearchParams} from "next/navigation";
 import {getAccessTokenFromLocalStorage, getRefreshTokenFromLocalStorage} from "@/lib/utils";
-import {useAppContext} from "@/components/app-provider";
+import {useAppStore} from "@/components/app-provider";
 
 const LogoutPage = () => {
     const { mutateAsync } = useLogoutMutation()
     const router = useRouter()
-    const { setRole } = useAppContext()
+    const setRole = useAppStore((state) => state.setRole)
     const searchParams = useSearchParams()
     const refreshTokenFromUrl = searchParams.get('refreshToken')
     const accessTokenFromUrl = searchParams.get('accessToken')
@@ -33,7 +33,7 @@ const LogoutPage = () => {
         } else {
             router.push('/')
         }
-    }, [mutateAsync, router, refreshTokenFromUrl, accessTokenFromUrl])
+    }, [mutateAsync, router, refreshTokenFromUrl, accessTokenFromUrl, setRole])
     return <div>Log out....</div>
 };
 

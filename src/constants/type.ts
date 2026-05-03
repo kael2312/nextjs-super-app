@@ -1,3 +1,5 @@
+import type {Socket} from "socket.io-client";
+
 export const TokenType = {
   ForgotPasswordToken: 'ForgotPasswordToken',
   AccessToken: 'AccessToken',
@@ -54,3 +56,5 @@ export const OrderStatusValues = [
 ] as const
 
 export const ManagerRoom = 'manager' as const
+
+export type SocketType = Record<'main' | 'notification' | 'chat', Socket>

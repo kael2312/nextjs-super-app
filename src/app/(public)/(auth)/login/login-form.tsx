@@ -12,13 +12,13 @@ import {toast} from "sonner";
 import {handleErrorApi} from "@/lib/utils";
 import {useRouter, useSearchParams} from "next/navigation";
 import {useEffect} from "react";
-import {useAppContext} from "@/components/app-provider";
+import {useAppStore} from "@/components/app-provider";
 
 export default function LoginForm() {
     const loginMutation = useLoginMutation()
     const searchParams = useSearchParams()
     const clearTokens = searchParams.get('clearTokens')
-    const { setRole } = useAppContext()
+    const setRole = useAppStore((state) => state.setRole)
     const form = useForm<LoginBodyType>({
         resolver: zodResolver(LoginBody),
         defaultValues: {

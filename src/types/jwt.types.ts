@@ -1,11 +1,11 @@
 import {Role, TokenType} from "@/constants/type";
 
 export type TokenTypeValue = (typeof TokenType)[keyof typeof TokenType];
-export type RoleTye = (typeof Role)[keyof typeof Role];
+export type RoleType = (typeof Role)[keyof typeof Role];
 
 export interface TokenPayload {
     useId: number;
-    role: RoleTye;
+    role: RoleType;
     tokenType: TokenTypeValue;
     exp: number;
     iat: number;

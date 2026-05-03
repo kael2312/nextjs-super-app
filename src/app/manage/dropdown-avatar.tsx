@@ -13,17 +13,12 @@ import Link from 'next/link'
 import {useLogoutMutation} from "@/queries/useAuth";
 import {useRouter} from 'next/navigation'
 import {useAccount} from "@/queries/useAccount";
-import {useAppContext} from "@/components/app-provider";
-
-const account = {
-  name: 'Nguyễn Văn A',
-  avatar: 'https://i.pravatar.cc/150'
-}
+import {useAppStore} from "@/components/app-provider";
 
 export default function DropdownAvatar() {
   const logoutMutation = useLogoutMutation()
   const router = useRouter()
-  const { setRole } = useAppContext()
+  const setRole = useAppStore((state) => state.setRole)
   const userProfileQuery = useAccount()
   const account = userProfileQuery.data?.payload.data
 

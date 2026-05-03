@@ -13,10 +13,10 @@ import {
 import {useSearchParams, useParams, useRouter} from 'next/navigation'
 import { useGuestLoginMutation } from '@/queries/useGuest'
 import { handleErrorApi } from '@/lib/utils'
-import {useAppContext} from "@/components/app-provider";
+import {useAppStore} from "@/components/app-provider";
 
 export default function GuestLoginForm() {
-  const {setRole} = useAppContext()
+  const setRole = useAppStore((state) => state.setRole)
   const searchParams = useSearchParams()
   const params = useParams()
   const tableNumber = Number(params.number)

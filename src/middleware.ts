@@ -5,6 +5,7 @@ import {Role} from "@/constants/type";
 
 const managePaths = ['/manage']
 const guestPaths = ['/guest']
+const onlyOwnerPaths = ['/vi/manage/accounts', '/en/manage/accounts']
 const privatePaths = [...managePaths, guestPaths]
 const unAuthPaths = ['/login']
 
@@ -37,8 +38,22 @@ export function middleware(request: NextRequest){
 
         // 2.3 Vào không đúng role thì sẽ redirect về trang chủ
         const role = decodeToken(refreshToken).role
-        if((role === Role.Guest && managePaths.some((path) => pathname.startsWith(path))) ||
-            (role !== Role.Guest && guestPaths.some((path) => pathname.startsWith(path)))
+        // Guest nhưng cố vào route owner
+        const isGuestGoToManagePath =
+            role === Role.Guest &&
+            managePaths.some((path) => pathname.startsWith(path))
+        // Không phải Guest nhưng cố vào route guest
+        const isNotGuestGoToGuestPath =
+            role !== Role.Guest &&
+            guestPaths.some((path) => pathname.startsWith(path))
+        // Không phải Owner nhưng cố tình truy cập vào các route dành cho owner
+        const isNotOwnerGoToOwnerPath =
+            role !== Role.Owner &&
+            onlyOwnerPaths.some((path) => pathname.startsWith(path))
+        if (
+            isGuestGoToManagePath ||
+            isNotGuestGoToGuestPath ||
+            isNotOwnerGoToOwnerPath
         ){
             return NextResponse.redirect(new URL('/', request.url));
         }
