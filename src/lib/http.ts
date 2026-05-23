@@ -199,14 +199,15 @@ const http = {
         body: TBody,
         options?: Omit<CustomOptions, 'body'> | undefined
     ) {
-        return request<Response>('POST', url, { ...options, body: JSON.stringify(body) })
+        const abcd = options
+        return request<Response>('POST', url, { ...options, body: body instanceof FormData ? body : JSON.stringify(body) })
     },
     put<TBody, Response>(
         url: string,
         body: TBody,
         options?: Omit<CustomOptions, 'body'> | undefined
     ) {
-        return request<Response>('PUT', url, { ...options, body: JSON.stringify(body) })
+        return request<Response>('PUT', url, { ...options, body: body instanceof FormData ? body : JSON.stringify(body) })
     },
     delete<Response>(
         url: string,

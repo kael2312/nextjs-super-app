@@ -1,4 +1,6 @@
 'use client'
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import menuItems from '@/app/manage/menuItems'
 import { useAppStore } from '@/components/app-provider'
 import { Button } from '@/components/ui/button'
